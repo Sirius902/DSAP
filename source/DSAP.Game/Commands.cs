@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Windows.Win32.System.Memory;
@@ -66,7 +65,10 @@ internal static class Commands
 
         try
         {
-            Unsafe.Copy(addr, ref code[0]);
+            fixed (byte* pCode = code)
+            {
+                Unsafe.CopyBlock(addr, pCode, (uint)code.Length);
+            }
 
             if (!Windows.Win32.PInvoke.VirtualProtect(
                     addr,
