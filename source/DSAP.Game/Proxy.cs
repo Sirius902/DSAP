@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -20,6 +21,8 @@ internal static class Proxy
     private static unsafe delegate* unmanaged<void> _steamApiRunCallbacks;
 
     private static readonly ManualResetEventSlim WaitForFunctionPointers = new(false);
+
+    private static readonly Queue<GameAction> PendingRetryActions = new();
 
 #pragma warning disable CA2255
     [ModuleInitializer]
@@ -62,7 +65,7 @@ internal static class Proxy
 
     private static unsafe void HookSteamApiRunCallbacks()
     {
-        var importTableEntry = Helpers.FromImport(null, "steam_api64.dll", "SteamAPI_RunCallbacks", 0);
+        var importTableEntry = Hooking.Helpers.FromImport(null, "steam_api64.dll", "SteamAPI_RunCallbacks", 0);
         
         if (!Windows.Win32.PInvoke.VirtualProtect(
                 importTableEntry,
@@ -82,16 +85,32 @@ internal static class Proxy
     [UnmanagedCallersOnly]
     private static void ProcessActions()
     {
-        if (ActionQueue.PendingActions.TryDequeue(out var action))
+        if (PendingRetryActions.TryDequeue(out var action))
         {
-            action.ActionToRun();
-            action.CompletionSource.SetResult();
+            ProcessAction(action);
+        }
+
+        if (ActionQueue.PendingActions.TryDequeue(out action))
+        {
+            ProcessAction(action);
         }
 
         WaitForFunctionPointers.Wait();
         unsafe
         {
             _steamApiRunCallbacks();
+        }
+    }
+
+    private static void ProcessAction(GameAction action)
+    {
+        if (action.ActionToRun())
+        {
+            action.CompletionSource.SetResult();
+        }
+        else
+        {
+            PendingRetryActions.Enqueue(action);
         }
     }
 }

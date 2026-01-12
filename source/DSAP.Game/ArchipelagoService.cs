@@ -2,9 +2,6 @@
 using DSAP.Game.Protos;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using Windows.Win32.Foundation;
-using Windows.Win32.UI.WindowsAndMessaging;
-using PInvoke = Windows.Win32.PInvoke;
 
 namespace DSAP.Game;
 
@@ -16,7 +13,9 @@ public class ArchipelagoService : ArchipelagoAction.ArchipelagoActionBase
 
         ActionQueue.PendingActions.Enqueue(new GameAction(() =>
         {
-            PInvoke.MessageBox(HWND.Null, "Homeward Bone Executed!", "DSAP.Game", MESSAGEBOX_STYLE.MB_OK);
+            if (!Helpers.IsInGame()) return false;
+            Commands.ExecuteHomewardBone();
+            return true;
         }, tcs));
 
         await tcs.Task;
