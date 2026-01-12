@@ -57,7 +57,7 @@ internal static class Commands
 
         try
         {
-            Unsafe.Copy(addr, ref code);
+            Unsafe.Copy(addr, ref code[0]);
 
             if (!Windows.Win32.PInvoke.VirtualProtect(
                     addr,
@@ -73,7 +73,7 @@ internal static class Commands
         }
         finally
         {
-            Windows.Win32.PInvoke.VirtualFree(addr, (nuint)code.Length, VIRTUAL_FREE_TYPE.MEM_RELEASE);
+            Windows.Win32.PInvoke.VirtualFree(addr, 0, VIRTUAL_FREE_TYPE.MEM_RELEASE);
         }
     }
 }
