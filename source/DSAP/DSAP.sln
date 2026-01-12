@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSAP", "DSAP.csproj", "{676
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSAP.Desktop", "..\DSAP.Desktop\DSAP.Desktop.csproj", "{DCB08E85-280E-7DE2-1640-4AC56DB09ECD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSAP.Game", "..\DSAP.Game\DSAP.Game.csproj", "{A8F51412-D302-4A6D-9710-48BFDA7DFDB8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{DCB08E85-280E-7DE2-1640-4AC56DB09ECD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DCB08E85-280E-7DE2-1640-4AC56DB09ECD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DCB08E85-280E-7DE2-1640-4AC56DB09ECD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8F51412-D302-4A6D-9710-48BFDA7DFDB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8F51412-D302-4A6D-9710-48BFDA7DFDB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8F51412-D302-4A6D-9710-48BFDA7DFDB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8F51412-D302-4A6D-9710-48BFDA7DFDB8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
