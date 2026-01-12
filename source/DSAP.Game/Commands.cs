@@ -4,12 +4,16 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Windows.Win32.System.Memory;
+using DSAP.Game.Models;
 
 namespace DSAP.Game;
 
 internal static class Commands
 {
-    private static readonly nint BaseAddress = Process.GetCurrentProcess().MainModule!.BaseAddress;
+    /* aka GameDataMan */
+    private static AoBHelper BaseBAoB = new("BaseB",
+        [0x48, 0x8B, 0x05, 0x00, 0x00, 0x00, 0x00, 0x45, 0x33, 0xED, 0x48, 0x8B, 0xF1, 0x48, 0x85, 0xC0],
+        "xxx????xxxxxxxxx", 3, 4);
     
     /*  ----------Code To Emulate--------------
         mov rcx,[BaseB]
@@ -42,9 +46,14 @@ internal static class Commands
             0xC3
         };
 
-        Array.Copy(BitConverter.GetBytes(BaseAddress), 0, command, 0x3, 4);
+        Array.Copy(BitConverter.GetBytes(GetBaseBAddress()), 0, command, 0x3, 4);
 
         ExecuteCommand(command);
+    }
+
+    private static nint GetBaseBAddress()
+    {
+        return BaseBAoB.Address;
     }
 
     private static unsafe void ExecuteCommand(byte[] code)
