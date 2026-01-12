@@ -1,0 +1,9 @@
+﻿syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option csharp_namespace = "DSAP.Game.Protos";
+
+service ArchipelagoAction {
+  rpc HomewardBone (google.protobuf.Empty) returns (google.protobuf.Empty);
+}

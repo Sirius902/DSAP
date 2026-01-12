@@ -27,12 +27,17 @@ using static DSAP.Enums;
 using Color = Avalonia.Media.Color;
 using Location = Archipelago.Core.Models.Location;
 using System.Threading.Tasks;
+using DSAP.Game.Protos;
+using Google.Protobuf.WellKnownTypes;
+using Grpc.Net.Client;
 
 namespace DSAP;
 
 public partial class App : Application
 {
     public static MainWindowViewModel Context;
+    private static GrpcChannel Channel;
+    private static ArchipelagoAction.ArchipelagoActionClient GameClient;
     private DeathLinkService _deathlinkService;
     DateTime lastDeathLinkTime = DateTime.MinValue;
     private const bool DEBUG_TXTLOG = false;
@@ -81,8 +86,12 @@ public partial class App : Application
         Context.UnstuckClicked += Context_UnstuckClicked;
         Context.CommandReceived += Context_CommandReceived;
 
-        Context.ConnectButtonEnabled = true;
+        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
+        Channel = GrpcChannel.ForAddress("http://localhost:15950");
+        GameClient = new ArchipelagoAction.ArchipelagoActionClient(Channel);
+
+        Context.ConnectButtonEnabled = true;
     }
     public void Context_CommandReceived(object? sender, ArchipelagoCommandEventArgs a)
     {
@@ -158,14 +167,26 @@ public partial class App : Application
 
     public static void HomewardBoneCommand()
     {
-        var command = Helpers.HomewardBone();
+        /* var command = Helpers.HomewardBone();
 
         Array.Copy(BitConverter.GetBytes(Helpers.GetBaseBAddress()), 0, command, 0x3, 4);
 
-        var result = Memory.ExecuteCommand(command);
+        var result = Memory.ExecuteCommand(command); */
 
-        Log.Logger.Information($"Forced Load Screen - Items Reset.");
-        App.Client.AddOverlayMessage($"Forced Load Screen - Items Reset.");
+        try 
+        {
+            Log.Logger.Information("Sending Homeward Bone request to game...");
+
+            GameClient.HomewardBone(new Empty());
+
+            Log.Logger.Information("Forced Load Screen - Items Reset.");
+            App.Client.AddOverlayMessage("Forced Load Screen - Items Reset.");
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Error($"gRPC Command Failed: {ex.Message}");
+            App.Client.AddOverlayMessage("Error: Game proxy not responding.");
+        }
     }
     public static bool IsValidPointer(ulong address)
     {

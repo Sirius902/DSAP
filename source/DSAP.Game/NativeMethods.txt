@@ -1,2 +1,2 @@
-MessageBox
-MESSAGEBOX_STYLE
+﻿MessageBox
+VirtualProtect
