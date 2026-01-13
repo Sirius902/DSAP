@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Win32.Foundation;
 using Windows.Win32.System.Memory;
-using DSAP.Game.Hooking;
+using Windows.Win32.UI.WindowsAndMessaging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -29,31 +31,45 @@ internal static class Proxy
 #pragma warning restore CA2255
     public static void Initialize()
     {
-        var systemPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
-        var lib = NativeLibrary.Load(Path.Combine(systemPath, "dinput8.dll"));
-        unsafe
+        try
         {
-            _directInput8Create = (delegate* unmanaged<nint, uint, Guid*, nint*, nint, int>)NativeLibrary.GetExport(lib, "DirectInput8Create");
-        }
-
-        HookSteamApiRunCallbacks();
-
-        WaitForFunctionPointers.Set();
-
-        Task.Run(async () =>
-        {
-            var builder = WebApplication.CreateSlimBuilder();
-            builder.WebHost.ConfigureKestrel(options =>
+            var systemPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            var lib = NativeLibrary.Load(Path.Combine(systemPath, "dinput8.dll"));
+            unsafe
             {
-                options.ListenLocalhost(15950, o => o.Protocols = HttpProtocols.Http2);
+                _directInput8Create = (delegate* unmanaged<nint, uint, Guid*, nint*, nint, int>)NativeLibrary.GetExport(lib, "DirectInput8Create");
+            }
+
+            HookSteamApiRunCallbacks();
+
+            WaitForFunctionPointers.Set();
+
+            Task.Run(async () =>
+            {
+                try
+                {
+                    var builder = WebApplication.CreateSlimBuilder();
+                    builder.WebHost.ConfigureKestrel(options =>
+                    {
+                        options.ListenLocalhost(15950, o => o.Protocols = HttpProtocols.Http2);
+                    });
+
+                    builder.Services.AddGrpc();
+                    var app = builder.Build();
+                    app.MapGrpcService<ArchipelagoService>();
+
+                    await app.RunAsync();
+                }
+                catch (Exception e)
+                {
+                    ShowError($"The background server crashed. Client connections will fail.\n\n{e.Message}");
+                }
             });
-
-            builder.Services.AddGrpc();
-            var app = builder.Build();
-            app.MapGrpcService<ArchipelagoService>();
-
-            await app.RunAsync();
-        });
+        }
+        catch (Exception e)
+        {
+            ShowError($"Failed to initialize DSAP Proxy.\n\n{e.Message}");
+        }
     }
 
     [UnmanagedCallersOnly(EntryPoint = "DirectInput8Create")]
@@ -61,6 +77,11 @@ internal static class Proxy
     {
         WaitForFunctionPointers.Wait();
         return _directInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
+    }
+
+    private static void ShowError(string message)
+    {
+        Windows.Win32.PInvoke.MessageBox(HWND.Null, message, Assembly.GetExecutingAssembly().FullName, MESSAGEBOX_STYLE.MB_OK | MESSAGEBOX_STYLE.MB_ICONERROR | MESSAGEBOX_STYLE.MB_TOPMOST);
     }
 
     private static unsafe void HookSteamApiRunCallbacks()
@@ -104,13 +125,20 @@ internal static class Proxy
 
     private static void ProcessAction(GameAction action)
     {
-        if (action.ActionToRun())
+        try
         {
-            action.CompletionSource.SetResult();
+            if (action.ActionToRun())
+            {
+                action.CompletionSource.SetResult();
+            }
+            else
+            {
+                PendingRetryActions.Enqueue(action);
+            }
         }
-        else
+        catch (Exception e)
         {
-            PendingRetryActions.Enqueue(action);
+            ShowError($"Failed to process action.\n\n{e.Message}");
         }
     }
 }
