@@ -137,46 +137,33 @@ public partial class App : Application
         }
             
     }
-    public static void AddItem(int category, int id, int quantity)
+    public static void AddItem(int category, int id, int quantity, bool showMessage = false)
     {
-        var command = Helpers.GetItemCommand();
-        //Set item category
-        Array.Copy(BitConverter.GetBytes(category), 0, command, 0x1, 4);
-        //Set item quantity
-        Array.Copy(BitConverter.GetBytes(quantity), 0, command, 0x7, 4);
-        //set item id
-        Array.Copy(BitConverter.GetBytes(id), 0, command, 0xD, 4);
-
-        var result = Memory.ExecuteCommand(command);
+        try 
+        {
+            GameClient.AddItem(new AddItemMsg
+            {
+                Category = category,
+                Id = (uint)id,
+                Quantity = (uint)quantity, 
+                ShowMessage = false
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Error($"gRPC Command Failed: {ex.Message}");
+            App.Client.AddOverlayMessage("Error: Game proxy not responding.");
+        }
     }
     public static void AddItemWithMessage(int category, int id, int quantity)
     {
-        var command = Helpers.GetItemWithMessage();
-
-        // Set item category (at offset 0x3F)
-        Array.Copy(BitConverter.GetBytes(category), 0, command, 0x3F, 4);
-
-        // Set item quantity (at offset 0x43)
-        Array.Copy(BitConverter.GetBytes(quantity), 0, command, 0x43, 4);
-
-        // Set item id (at offset 0x47)
-        Array.Copy(BitConverter.GetBytes(id), 0, command, 0x47, 4);
-
-        var result = Memory.ExecuteCommand(command);
+        AddItem(category, id, quantity, showMessage: true);
     }
 
     public static void HomewardBoneCommand()
     {
-        /* var command = Helpers.HomewardBone();
-
-        Array.Copy(BitConverter.GetBytes(Helpers.GetBaseBAddress()), 0, command, 0x3, 4);
-
-        var result = Memory.ExecuteCommand(command); */
-
         try 
         {
-            Log.Logger.Information("Sending Homeward Bone request to game...");
-
             GameClient.HomewardBone(new Empty());
 
             Log.Logger.Information("Forced Load Screen - Items Reset.");

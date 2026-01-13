@@ -6,4 +6,12 @@ option csharp_namespace = "DSAP.Game.Protos";
 
 service ArchipelagoAction {
   rpc HomewardBone (google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc AddItem (AddItemMsg) returns (google.protobuf.Empty);
+}
+
+message AddItemMsg {
+  sint32 category = 1;
+  uint32 id = 2;
+  uint32 quantity = 3;
+  bool show_message = 4;
 }

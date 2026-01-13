@@ -66,7 +66,7 @@ internal static class Proxy
     private static unsafe void HookSteamApiRunCallbacks()
     {
         var importTableEntry = Hooking.Helpers.FromImport(null, "steam_api64.dll", "SteamAPI_RunCallbacks", 0);
-        
+
         if (!Windows.Win32.PInvoke.VirtualProtect(
                 importTableEntry,
                 (nuint)Unsafe.SizeOf<nint>(),

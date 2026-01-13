@@ -1,4 +1,2 @@
 ﻿MessageBox
-VirtualAlloc
-VirtualFree
 VirtualProtect
