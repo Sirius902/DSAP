@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
+using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -31,6 +32,8 @@ internal static class Proxy
 #pragma warning restore CA2255
     public static void Initialize()
     {
+        GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+
         try
         {
             var systemPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
